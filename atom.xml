@@ -6,7 +6,7 @@
   <link href="https://big7ng.github.io/atom.xml" rel="self"/>
   
   <link href="https://big7ng.github.io/"/>
-  <updated>2023-06-05T14:30:49.978Z</updated>
+  <updated>2023-06-06T11:29:22.230Z</updated>
   <id>https://big7ng.github.io/</id>
   
   <author>
@@ -15,6 +15,26 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>通过GitHub Pages托管Hexo个人博客</title>
+    <link href="https://big7ng.github.io/2023/06/06/hexo_blog/"/>
+    <id>https://big7ng.github.io/2023/06/06/hexo_blog/</id>
+    <published>2023-06-06T11:03:07.979Z</published>
+    <updated>2023-06-06T11:29:22.230Z</updated>
+    
+    <content type="html"><![CDATA[<p>本文将介绍如何通过GitHub Pages托管个人静态页面，博客所使用的框架为<a href="https://hexo.io/zh-cn/index.html">Hexo</a>，Hexo主题为<a href="https://github.com/chongshengsun/hexo-theme-apollo">apollo</a>。</p><h2 id="本地环境搭建"><a href="#本地环境搭建" class="headerlink" title="本地环境搭建"></a>本地环境搭建</h2><h4 id="安装Git、Nodejs"><a href="#安装Git、Nodejs" class="headerlink" title="安装Git、Nodejs"></a>安装Git、Nodejs</h4><h4 id="安装配置Hexo"><a href="#安装配置Hexo" class="headerlink" title="安装配置Hexo"></a>安装配置Hexo</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo</span><br></pre></td></tr></table></figure><p>创建文件夹,初始化Hexo</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init</span><br></pre></td></tr></table></figure><h4 id="安装apollo主题"><a href="#安装apollo主题" class="headerlink" title="安装apollo主题"></a>安装apollo主题</h4><p>安装依赖项(可能会有警告,但可以不管)</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save hexo-renderer-jade hexo-generator-feed hexo-generator-sitemap hexo-browsersync hexo-generator-archive</span><br></pre></td></tr></table></figure><p>下载主题文件</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/chongshengsun/hexo-theme-apollo.git themes/apollo</span><br></pre></td></tr></table></figure><p>修改<code>_config.yml</code>的<code>theme</code>配置项为<code>apollo</code>:</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Extensions</span></span><br><span class="line"><span class="comment">## Plugins: https://hexo.io/plugins/</span></span><br><span class="line"><span class="comment">## Themes: https://hexo.io/themes/</span></span><br><span class="line"><span class="attr">theme:</span> <span class="string">apollo</span></span><br></pre></td></tr></table></figure><p>apollo主题中的标签栏信息可以在<code>./theme/apollo/_config.yml</code>文件中修改。</p><h2 id="GitHub-Pages配置与部署Hexo"><a href="#GitHub-Pages配置与部署Hexo" class="headerlink" title="GitHub Pages配置与部署Hexo"></a>GitHub Pages配置与部署Hexo</h2><p>一开始打算使用Gitee的页面托管，但是使用该服务需要上传身份证照片，不仅麻烦还不方便写一些特殊技术，遂放弃。如何使用GitHub Pages可以参考<a href="https://docs.github.com/en/pages/quickstart">这篇文章</a>。</p><p>配置好GitHub Pages就可以部署Hexo了.</p><h4 id="部署Hexo"><a href="#部署Hexo" class="headerlink" title="部署Hexo"></a>部署Hexo</h4><p>安装 hexo-deployer-git</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure><p>修改<code>_config.yml</code>配置文件</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/Big7ng/Big7ng.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure><p>在命令行输入如下命令完成部署</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;本文将介绍如何通过GitHub Pages托管个人静态页面，博客所使用的框架为&lt;a href=&quot;https://hexo.io/zh-cn/index.html&quot;&gt;Hexo&lt;/a&gt;，Hexo主题为&lt;a href=&quot;https://github.com/chongshengs</summary>
+      
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>Hello World</title>
