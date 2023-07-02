@@ -14,15 +14,15 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lunch sdk_pc_x86_64-userdebug <span class="comment">#也可以只输入lunch命令，再根据提示进行选择</span></span><br></pre></td></tr></table></figure>
 <p>开始构建，可以通过<code>-jN</code>选项设置线程数。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">m</span><br></pre></td></tr></table></figure>
-<img src="./pics/build.png" width="600">
+<img src="/img/build.png" width="600">
 
-<p>本文使用16线程数、16GB内存以及30GB交换空间进行编译，耗时约两个半小时，编译完成后提示：<br><img src="./pics/build_finish.png" width="600"></p>
+<p>本文使用16线程数、16GB内存以及30GB交换空间进行编译，耗时约两个半小时，编译完成后提示：<br><img src="/img/build_finish.png" width="600"></p>
 <h3 id="运行emulator"><a href="#运行emulator" class="headerlink" title="运行emulator"></a>运行emulator</h3><p>编译完成后，使用<code>emulator</code>命令启动模拟器，在启用模拟器前，需要通过<code>lunch</code>进行设置。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">emulator</span><br></pre></td></tr></table></figure>
-<img src="./pics/boot.png" width="600">
+<img src="/img/boot.png" width="600">
 
 <h1 id="修改开机动画"><a href="#修改开机动画" class="headerlink" title="修改开机动画"></a>修改开机动画</h1><p>打开<code>packages/services/Car/car_product/bootanimations/bootanimation-832.zip</code>目录，将<code>bootanimation-832.zip</code>修改为自定义的开机动画即可。</p>
 <p>修改完成后，将下述代码加入编译时使用到的任意makefile即可，我这里选用的是<code>build/make/core/envsetup.mk</code>。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">PRODUCT_COPY_FILES += \</span><br><span class="line">  packages/services/Car/car_product/bootanimations/bootanimation-832.zip:system/media/bootanimation.zip</span><br></pre></td></tr></table></figure>
-<p>重新编译，再运行emulator，即可看到修改后的开机动画。<br><img src="./pics/boot2.png" width="600"></p>
+<p>重新编译，再运行emulator，即可看到修改后的开机动画。<br><img src="/img/boot2.png" width="600"></p>
 </div></article></div></main><footer><div class="paginator"><a href="/2023/06/06/hexo_blog/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2023 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
