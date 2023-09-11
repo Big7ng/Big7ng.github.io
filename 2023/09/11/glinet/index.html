@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 为使用国产SF19A2890芯片的gl-sft1200路由器编译第三方固件 · Big7ng's Blog</title><meta name="description" content="为使用国产SF19A2890芯片的gl-sft1200路由器编译第三方固件 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">为使用国产SF19A2890芯片的gl-sft1200路由器编译第三方固件</h1><div class="post-info">Sep 11, 2023</div><div class="post-content"><p>使用vmware虚拟机，操作系统为ubuntu20.04</p>
+<h1 id="编译固件"><a href="#编译固件" class="headerlink" title="编译固件"></a>编译固件</h1><p>首先下载第三方固件源码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/Big7ng/openwrt-sf-sft1200.git</span><br></pre></td></tr></table></figure>
+
+<p>进入openwrt目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> openwrt-18.06</span><br></pre></td></tr></table></figure>
+
+<p>更新feeds</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./scripts/feeds update -a&amp;&amp; ./scripts/feeds install -a</span><br></pre></td></tr></table></figure>
+
+<p>根据所使用的路由器型号选择配置文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cp</span> .config.sf1200 .config  <span class="comment">#如果使用sf路由器则 cp .config.sf1200 .config</span></span><br></pre></td></tr></table></figure>
+
+<p>配置所需要的luci-app以及luci-theme</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make menuconfig</span><br></pre></td></tr></table></figure>
+
+<p>依次点击LuCI-&gt;Applications\Themes,然后选择需要编译安装的应用,我这里选择安装了Openclash以及argon主题。</p>
+<img src="D:\code\blog_hexo\source\img\vmware_sBGwsBqf1i.png" alt="vmware_sBGwsBqf1i" style="zoom:50%;" />
+
+<img src="D:\code\blog_hexo\source\img\vmware_xfmucOtP3D.png" alt="vmware_xfmucOtP3D" style="zoom: 67%;" />
+
+<p>下载编译所需工具，<code>n</code>为使用处理器数量</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make -jn download</span><br><span class="line">make V=s -jn</span><br></pre></td></tr></table></figure>
+
+<p>使用官方SDK时，下载时会出现xxd工具<a target="_blank" rel="noopener" href="https://github.com/openwrt/openwrt/issues/10555">无法下载的问题</a>，具体的原因为源码配置的连接类型为http，而该网站之后拒绝了http请求，导致无法下载，我们只需要将原url中的http改为https即可。</p>
+<p>编译完成后，打开<code>./bin/targets/siflower</code>文件夹，将<code>immortalwrt-siflower-sf19a28-fullmask-glinet_gl-sft1200-squashfs-factory.img</code>文件保存起来为后续烧录使用。</p>
+<h1 id="烧录固件"><a href="#烧录固件" class="headerlink" title="烧录固件"></a>烧录固件</h1><p>如果现在路由器上使用的是官方固件，那么可以打开管理页面进行Web升级，如果路由器上使用的是第三方固件，那么只能使用uboot刷入，如下所示：</p>
+<p>断开电源，将路由器lan口与电脑连接，按住路由器重置键不放，打开电源，路由器灯闪五下后变成白灯，此时将本机ip改为192.168.1.0网段，然后浏览器输入192.168.1.1进入uboot界面，选择之前编译好的固件。</p>
+<img src="D:\code\blog_hexo\source\img\dllhost_UQCpNjowUK.png" alt="dllhost_UQCpNjowUK" style="zoom:50%;" />
+
+<img src="D:\code\blog_hexo\source\img\chrome_HxQKGEsgQF.png" alt="chrome_HxQKGEsgQF" style="zoom:50%;" />
+
+<p>烧入固件成功后，连接名为Openwrt的WIFI，连接成功后进入192.168.1.1管理界面，初始账号为root，密码为passwd。</p>
+<img src="D:\code\blog_hexo\source\img\image-20230911201258283.png" alt="image-20230911201258283" style="zoom: 33%;" />
+
+<h1 id="使用感悟"><a href="#使用感悟" class="headerlink" title="使用感悟"></a>使用感悟</h1><p>矽昌Siflower的SF19A2890使用了MIPS架构，但对该架构进行了修改，导致无法使用已经编译过的MIPS二进制程序，而需要特定工具链进行编译。Openclash提供的MIPS架构clash内核无法在路由器上使用，需要自行编译，待后续有时间再进行了解，目前就先用一下Passwall吧。</p>
+<p>不过Clash的界面做的真心可以，不管是CFW、clash网页界面还是Openclash，都比其它工具好看，导致我更喜欢用clash。</p>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.right.com.cn/forum/thread-7348817-1-7.html">恩山论坛zheshifandian</a></li>
+<li><a target="_blank" rel="noopener" href="https://forum.gl-inet.cn/forum.php?mod=viewthread&tid=3215&extra=page=1">glinet论坛mulder125</a></li>
+</ul>
+<p>​		</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2023/07/02/android/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2023 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
