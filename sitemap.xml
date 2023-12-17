@@ -2,18 +2,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://big7ng.github.io/2023/11/05/samba/</loc>
+    <loc>https://big7ng.github.io/2023/09/24/visionfive2/</loc>
     
-    <lastmod>2023-11-05</lastmod>
+    <lastmod>2023-12-17</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://big7ng.github.io/2023/09/24/unfinished/visionfive2/</loc>
+    <loc>https://big7ng.github.io/2023/11/05/samba/</loc>
     
-    <lastmod>2023-09-24</lastmod>
+    <lastmod>2023-11-05</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -58,7 +58,7 @@
 
   <url>
     <loc>https://big7ng.github.io/</loc>
-    <lastmod>2023-11-05</lastmod>
+    <lastmod>2023-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
