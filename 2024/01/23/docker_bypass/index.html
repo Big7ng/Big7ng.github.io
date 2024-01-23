@@ -1,5 +1,8 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> rk3568开发板使用Docker安装Openwrt实现旁路由 · Big7ng's Blog</title><meta name="description" content="rk3568开发板使用Docker安装Openwrt实现旁路由 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
 </head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">rk3568开发板使用Docker安装Openwrt实现旁路由</h1><div class="post-info">Jan 23, 2024</div><div class="post-content"><p>开发板为Lubancat2n<br>系统为ubuntu20.04<br>主路由器网段为192.168.124.0&#x2F;24,  网关为192.168.124.1</p>
+<img src="\img\network_tp.png" style="zoom:50%;" />
+
+
 <h1 id="安装与配置Docker"><a href="#安装与配置Docker" class="headerlink" title="安装与配置Docker"></a>安装与配置Docker</h1><p>根据<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/ubuntu/">官网的步骤</a>, 安装Docker。<br>安装portainer容器：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create portainer_data</span><br></pre></td></tr></table></figure>
 
@@ -28,7 +31,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name=OpenWrt --restart always --privileged --network macnet --ip 192.168.124.20 piaoyizy/openwrt-aarch64:latest</span><br></pre></td></tr></table></figure>
 
 <p>此时在浏览器中输入旁路由地址还不能访问openwrt页面,  因为容器中默认使用的静态分配IP地址与我们使用的不同，需要进入bash设置，在portainer控制台中进入openwrt容器的命令行界面.</p>
-<img src="D:\code\blog_hexo\source\img\portainer.png" style="zoom:67%;" />
+<img src="\img\portainer.png" style="zoom:67%;" />
 
 <p>修改配置文件:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/config/network</span><br></pre></td></tr></table></figure>
