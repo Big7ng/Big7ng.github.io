@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://big7ng.github.io/2024/01/23/docker_bypass/</loc>
+    
+    <lastmod>2024-01-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://big7ng.github.io/2023/09/24/visionfive2/</loc>
     
     <lastmod>2023-12-17</lastmod>
@@ -58,7 +67,7 @@
 
   <url>
     <loc>https://big7ng.github.io/</loc>
-    <lastmod>2023-12-23</lastmod>
+    <lastmod>2024-01-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>

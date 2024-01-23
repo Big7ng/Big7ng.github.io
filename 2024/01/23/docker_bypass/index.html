@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> rk3568开发板使用Docker安装Openwrt实现旁路由 · Big7ng's Blog</title><meta name="description" content="rk3568开发板使用Docker安装Openwrt实现旁路由 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">rk3568开发板使用Docker安装Openwrt实现旁路由</h1><div class="post-info">Jan 23, 2024</div><div class="post-content"><p>开发板为Lubancat2n<br>系统为ubuntu20.04<br>主路由器网段为192.168.124.0&#x2F;24,  网关为192.168.124.1</p>
+<h1 id="安装与配置Docker"><a href="#安装与配置Docker" class="headerlink" title="安装与配置Docker"></a>安装与配置Docker</h1><p>根据<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/ubuntu/">官网的步骤</a>, 安装Docker。<br>安装portainer容器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create portainer_data</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest</span><br></pre></td></tr></table></figure>
+
+<p>安装piaoyizy提供的<a target="_blank" rel="noopener" href="https://hub.docker.com/r/piaoyizy/openwrt-aarch64">openwrt镜像</a>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull piaoyizy/openwrt-aarch64:latest</span><br></pre></td></tr></table></figure>
+
+<p>将选用的网卡打开混杂模式, 需要将下述命令中的<code>eth3</code>修改为实际使用的网卡:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ip link set eth3 promisc on</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>可以使用<code>ip a</code>或<code>ifconfig</code>查看本机的网卡.</p>
+</li>
+<li><p>混杂模式（promiscuous mode）是计算机网络中的术语。是指一台机器的网卡能够接收所有经过它的数据流，而不论其目的地址是否是它。</p>
+<p><em>一般计算机网卡都工作在非混杂模式下，此时网卡只接受来自网络端口的目的地址指向自己的数据。当网卡工作在混杂模式下时，网卡将来自接口的所有数据都捕获并交给相应的驱动程序。网卡的混杂模式一般在网络管理员分析网络数据作为网络故障诊断手段时用到，同时这个模式也被网络黑客利用来作为网络数据窃听的入口。</em></p>
+</li>
+</ul>
+<p>创建docker network, 这里需要将网段与网关修改以符合主路由的设置, 将<code>parent</code>设置为使用的物理网卡:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create -d macvlan --subnet=192.168.124.0/24 --gateway=192.168.124.1 -o parent=eth3 macnet</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>macvlan为Docker network<a target="_blank" rel="noopener" href="https://docs.docker.com/network/drivers/">提供的驱动</a>中的一种。 macvlan是linux中网络虚拟化的一种技术，这种技术能将 <strong>一块物理网卡虚拟成多块虚拟网卡</strong> ，相当于物理网卡施展了多重影分身之术 ，由一个变多个。 深入macvlan可以参考如下文章：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzI1OTY2MzMxOQ==&mid=2247485246&idx=1&sn=c42a3618c357ebf5f6b7b7ce78ae568f&chksm=ea743386dd03ba90ad65940321385f68f9315fec16d82a08efa12c18501d8cadf95cf9e614a2&scene=21#wechat_redirect">Macvlan</a>，<a target="_blank" rel="noopener" href="https://www.cnblogs.com/bakari/p/10893589.html">Docker 网络模型之 macvlan 详解</a>，<a target="_blank" rel="noopener" href="https://docs.docker.com/network/drivers/macvlan/">Docker Macvlan文档</a>。</li>
+</ul>
+<p>运行容器:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name=OpenWrt --restart always --privileged --network macnet --ip 192.168.124.20 piaoyizy/openwrt-aarch64:latest</span><br></pre></td></tr></table></figure>
+
+<p>此时在浏览器中输入旁路由地址还不能访问openwrt页面,  因为容器中默认使用的静态分配IP地址与我们使用的不同，需要进入bash设置，在portainer控制台中进入openwrt容器的命令行界面.</p>
+<img src="D:\code\blog_hexo\source\img\portainer.png" style="zoom:67%;" />
+
+<p>修改配置文件:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/config/network</span><br></pre></td></tr></table></figure>
+<p>替换lan网络配置如下(根据自己的网络情况填写):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">config interface &#x27;lan&#x27;</span><br><span class="line">        option type &#x27;bridge&#x27;</span><br><span class="line">        option ifname &#x27;eth0&#x27;</span><br><span class="line">        option proto &#x27;static&#x27;</span><br><span class="line">        option ipaddr &#x27;192.168.124.20&#x27;</span><br><span class="line">        option netmask &#x27;255.255.255.0&#x27;</span><br><span class="line">        option gateway &#x27;192.168.124.1&#x27;</span><br><span class="line">        option dns &#x27;192.168.124.1&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>重启网络:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/etc/init.d/network restart</span><br></pre></td></tr></table></figure>
+
+<p>此时在浏览器中输入目标地址,即可访问openwrt页面,  默认账号 root 密码 password。</p>
+<p>登录openwrt界面后, 在openwrt的网络配置中，点击接口选项，修改名为LAN的接口。</p>
+<p>在<code>物理配置</code>中，取消勾选<code>桥接接口</code>；在<code>最下方的基本配置</code>中，关闭DHCP，勾选忽略此接口；<code>最下方的IPV6设置</code>中，<code>路由通告服务</code>、<code>DHCPv6 服务</code>和<code>NDP 代理</code>全部选择<code>已禁用</code>;<code>入站数据</code>、<code>出站数据</code>和<code>转发</code>全部选择接受；</p>
+<h1 id="配置OpenClash"><a href="#配置OpenClash" class="headerlink" title="配置OpenClash"></a>配置OpenClash</h1><p>piaoyizy提供的openwrt镜像中包含了passwall, openClash等插件，我们可以很方便的进行使用。</p>
+<p>在使用openClash时，出现了如下问题：<br>    开启服务后，Clash占用CPU、内存过大，Openwrt内显示的下载与上传速度非常高。后发现日志系统设置为Info模式，Clash内核会把所有的代理信息发送到网页控制台（9090端口），而这个代理信息的发送到端口9090的过程也会被当作Info再次发送到端口9090，导致无穷无尽地发送，使内核占用资源非常多。将日志信息模式修改为Warning模式即可。</p>
+<h1 id="配置客户端"><a href="#配置客户端" class="headerlink" title="配置客户端"></a>配置客户端</h1><p>在完成上述配置后，在操作系统网络设置中关闭客户端的DHCP自动分配，选择静态分配IP，将客户端的网关、DNS服务器指向在Docker中新搭建的openwrt。</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2023/11/05/samba/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2024 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
