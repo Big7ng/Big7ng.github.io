@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 使用C++ fastdeploy库部署yolov5lite模型 · Big7ng's Blog</title><meta name="description" content="使用C++ fastdeploy库部署yolov5lite模型 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">使用C++ fastdeploy库部署yolov5lite模型</h1><div class="post-info">Mar 24, 2024</div><div class="post-content"><p>使用python的fastdeploy库部署yolov5lite模型非常简单，只需要pip命令安装即可，但其运行速度慢，不适合在生产环境中使用，因此本文使用C++ fastdeploy库部署yolov5lite模型。</p>
+<h1 id="运行官方demo"><a href="#运行官方demo" class="headerlink" title="运行官方demo"></a>运行官方demo</h1><p>clone官方源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br></pre></td></tr></table></figure>
+
+<p>进入yolov5lite example目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd ./FastDeploy/examples/vison/detection/yolov5lite</span><br></pre></td></tr></table></figure>
+
+<p>下载预编译Fastdeploy库，需要在根据自己的硬件平台下载相应版本</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir build</span><br><span class="line">cd build</span><br><span class="line">wget https://bj.bcebos.com/fastdeploy/release/cpp/fastdeploy-linux-aarch64-1.0.0.tgz</span><br><span class="line">tar xvf fastdeploy-linux-aarch64-1.0.0.tgz</span><br></pre></td></tr></table></figure>
+
+<p>编译demo程序</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cmake .. -DFASTDEPLOY_INSTALL_DIR=$&#123;PWD&#125;/fastdeploy-linux-aarch64-1.0.0.tgz</span><br><span class="line">make -j</span><br></pre></td></tr></table></figure>
+<p>下载官方提供的模型与文件（也可以自己准备）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https://bj.bcebos.com/paddlehub/fastdeploy/v5Lite-g-sim-640.onnx</span><br><span class="line">wget https://gitee.com/paddlepaddle/PaddleDetection/raw/release/2.4/demo/000000014439.jpg</span><br></pre></td></tr></table></figure>
+
+<p>运行程序</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./infer_demo v5Lite-g-sim-640.onnx 000000014439.jpg 0</span><br></pre></td></tr></table></figure>
+
+<p>如果运行程序后出现了这个错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./infer_demo: error while loading shared libraries: libonnxruntime.so.1.12.0: cannot open shared object file: No such file or directory</span><br></pre></td></tr></table></figure>
+
+<p>通过执行如下命令，将FastDeploy的库路径添加到环境变量之后，重新执行二进制程序。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /home/user/FastDeploy/build/compiled_fastdeploy_sdk/fastdeploy_init.sh</span><br></pre></td></tr></table></figure>
+
+<h1 id="编译Fastdeploy"><a href="#编译Fastdeploy" class="headerlink" title="编译Fastdeploy"></a>编译Fastdeploy</h1><p>官方提供的Fastdeploy库自带的opencv库<strong>无法支持Video的读取</strong>，以及<strong>imshow等可视化界面功能</strong>。若要使用这些功能，则需要自行编译，编译时通过<code>-DOPENCV_DIRECTORY</code>来指定环境中的OpenCV。</p>
+<p>使用包管理器下载Opencv库，opencv库的地址一般在&#x2F;usr&#x2F;lib&#x2F;aarch64-linux-gnu&#x2F;cmake&#x2F;opencv4下，需要根据自己的硬件平台切换。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libopencv-dev</span><br></pre></td></tr></table></figure>
+
+<p>开始编译，本文只需要实现视觉功能，更多编译参数参考<a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/FastDeploy/blob/develop/docs/cn/build_and_install/cpu.md">官方文档</a>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cmake .. -DENABLE_ORT_BACKEND=ON \</span><br><span class="line">         -DCMAKE_INSTALL_PREFIX=$&#123;PWD&#125;/compiled_fastdeploy_sdk \</span><br><span class="line">         -DENABLE_VISION=ON \</span><br><span class="line">         -DOPENCV_DIRECTORY=/usr/lib/aarch64-linux-gnu/cmake/opencv4 </span><br><span class="line">make -j1</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>根据编译出的sdk位置编译demo程序</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cmake .. -DFASTDEPLOY_INSTALL_DIR=/home/user/FastDeploy/build/compiled_fastdeploy_sdk/</span><br><span class="line">make -j</span><br></pre></td></tr></table></figure>
+
+<h1 id="踩坑点"><a href="#踩坑点" class="headerlink" title="踩坑点"></a>踩坑点</h1><p>官方提供的demo程序只支持以640结尾的模型，即只支持640输入，因为model类的默认size为640，若要改用320模型，需要在代码模型对象中进行修改：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto model = fastdeploy::vision::detection::YOLOv5Lite(model_file);</span><br><span class="line">model.size = &#123;320, 320&#125;; #添加这一行</span><br></pre></td></tr></table></figure>
+
+</div></article></div></main><footer><div class="paginator"><a href="/2024/03/21/ffmpeg/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2024 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>

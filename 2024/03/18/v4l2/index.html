@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 使用v4l2loopback实现一个摄像头同时实现IP摄像头和OpenCV视频处理 · Big7ng's Blog</title><meta name="description" content="使用v4l2loopback实现一个摄像头同时实现IP摄像头和OpenCV视频处理 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">使用v4l2loopback实现一个摄像头同时实现IP摄像头和OpenCV视频处理</h1><div class="post-info">Mar 18, 2024</div><div class="post-content"><p>一个程序在读取摄像头时，如果另一个程序读取这个摄像头，会提示“设备繁忙”的错误，本文使用v4l2loopback将一个真实摄像头虚拟成两个，实现两个程序读取同一个摄像头拍摄的视频。</p>
+<h1 id="v4l-utils"><a href="#v4l-utils" class="headerlink" title="v4l-utils"></a>v4l-utils</h1><p>v4l-utils使用来管理媒体设备的一系列工具，首先安装v4l-utils工具</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install v4l-utils</span><br></pre></td></tr></table></figure>
+
+<p>将媒体设备与开发板连接（USB摄像头），若连接成功，在<code>/dev/</code>目录下会出现video设备</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> /dev/video*</span><br></pre></td></tr></table></figure>
+
+<p>使用v4l-utils中的v4l-ctl命令工具查看设备信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">v4l2-ctl --list-devices <span class="comment">#查看连接的v4l2设备</span></span><br><span class="line">v4l2-ctl --list-formats  <span class="comment">#查看设备支持的拍摄格式</span></span><br><span class="line">v4l2-ctl -d  /dev/video0 --all 	<span class="comment">#查看设备的详细信息</span></span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，如果摄像头不支持h264格式录制（例如本博客使用的摄像头支持MJPG与YUYV），那传输视频流的时候只能使用rtsp或rtmp。http+flv、hls等格式无法使用，因为他们只支持h264格式的视频流。</p>
+<h1 id="v4l2rtspserver"><a href="#v4l2rtspserver" class="headerlink" title="v4l2rtspserver"></a>v4l2rtspserver</h1><h4 id="RTSP协议"><a href="#RTSP协议" class="headerlink" title="RTSP协议"></a>RTSP协议</h4><p>Real-Time Messaging Protocol（RTMP）和The Real-Time Streaming Protocol (RTSP)是目前使用较广泛的流媒体协议之一。</p>
+<p>RTSP传输一般需要2-3个通道，命令和数据通道分离，HTTP和RTMP一般在TCP一个通道上传输命令和数据。RTSP 本身不传输数据流，而是配合 RTP&#x2F;RTCP 一起使用，RTSP 负责控制传输。</p>
+<p>由于 Flash 的普及度降低，chrome与firefox均停止了对Flash的支持，RTMP 的使用也在逐渐减少，被如 HLS（HTTP Live Streaming）和 DASH（Dynamic Adaptive Streaming over HTTP）等其他流媒体传输协议替代。</p>
+<h4 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h4><p><a target="_blank" rel="noopener" href="https://github.com/mpromonet/v4l2rtspserver">v4l2rtspserver</a>是一个v4l2设备的rtsp服务器，首先下载v4l2rtpserver源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --recursive https://github.com/mpromonet/v4l2rtspserver.git </span><br></pre></td></tr></table></figure>
+
+<p>v4l2rtspsever的依赖库如下：</p>
+<ul>
+<li>liblivemedia-dev：会在编译的时候自动下载</li>
+<li>libv4l2cpp：已作为子模块包含在源码中</li>
+<li>liblog4cpp5-dev ：可选项，增强日志功能</li>
+<li>libasound2-dev ：可选项，增加音频传输功能</li>
+</ul>
+<p>开始编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd v4l2rtspserver</span><br><span class="line">cmake . &amp;&amp; make</span><br></pre></td></tr></table></figure>
+
+<p>编译完成后，开始运行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./videortspserver -v -W 640 -H 480 /dev/video0</span><br></pre></td></tr></table></figure>
+
+<p>运行该命令后会输出直播url，可以输入至VLC播放器或者IP摄像头app进行远程查看。</p>
+<p>.&#x2F;ffmpeg -f v4l2 -input_format mjpeg -i &#x2F;dev&#x2F;video0 -c:v mjpeg -f v4l2 &#x2F;dev&#x2F;video2</p>
+<h1 id="v4l2loopback"><a href="#v4l2loopback" class="headerlink" title="v4l2loopback"></a>v4l2loopback</h1><p>v4l2loopback可以创建多个虚拟的媒体设备，我们可以把虚拟设备当作摄像头来使用，下载v4l2源码并进行编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/umlaeute/v4l2loopback.git</span><br><span class="line">cd v4l2loopback</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+
+<p>以下命令可以不执行，不影响使用，执行的话可以使用<code>modprobe</code>命令更方便地实现内核模块安装，但是本文在这一步出现了问题，因此放弃了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo make install </span><br></pre></td></tr></table></figure>
+
+<p>在v4l2loopback目录中执行以下命令，安装v4l2loopback内核模块，一下命令将</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo insmod v4l2loopback.ko devices=2 exclusive_caps=1,1 video_nr=2,3 card_label=<span class="string">&quot;IP Camera&quot;</span>,<span class="string">&quot;OpenCV Camera&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>也可以使用v4l2loopback-ctl来动态管理虚拟设备，但是还没有测试过</p>
+<h1 id="Mplayer"><a href="#Mplayer" class="headerlink" title="Mplayer"></a>Mplayer</h1><p>可以使用mplayer来测试虚拟设备，使用包管理器自带的mplayer会报错</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mplayer: symbol lookup error: mplayer: undefined symbol: av_alloc_vdpaucontext, version LIBAVCODEC_58</span><br></pre></td></tr></table></figure>
+
+<p>重新编译mplayer可以解决这个问题</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sudo apt remove mplayer</span><br><span class="line">wget https://mplayerhq.hu/MPlayer/releases/MPlayer-1.5.tar.gz</span><br><span class="line">tar -xzvf MPlayer-1.5.tar.gz</span><br><span class="line"><span class="built_in">cd</span> MPlayer-1.5/</span><br><span class="line">./configure </span><br><span class="line">make -j6</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
+
+<p>开始播放</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mplayer tv:// -tv driver=v4l2:device=/dev/video0</span><br></pre></td></tr></table></figure>
+
+<h1 id="ffmpeg"><a href="#ffmpeg" class="headerlink" title="ffmpeg"></a>ffmpeg</h1><p>使用ffmpeg把视频流&#x2F;真实摄像头输入虚拟设备中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f v4l2 -i /dev/video0 -f v4l2 /dev/video2</span><br><span class="line">ffplay /dev/video2</span><br></pre></td></tr></table></figure>
+
+<p>使用ffmpeg将摄像头的内容复制到<code>/dev/video2</code>与<code>/dev/video3</code>两个虚拟设备中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ffmpeg -f v4l2 -input_format mjpeg -i /dev/video0 -c:v copy -f v4l2 /dev/video2 -c:v copy -f v4l2 /dev/video3</span><br></pre></td></tr></table></figure>
+
+<p>此时就可以使用v4l2rtspserver读取<code>/dev/video2</code>中的内容，使用opencv读取<code>/dev/video3</code>中的内容了</p>
+<h1 id="v4l2tools"><a href="#v4l2tools" class="headerlink" title="v4l2tools"></a>v4l2tools</h1><p>v4l2tools是一个可以压缩、复制v4l2设备的工具，本文中使用ffmpeg代替了这个工具</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libtool autoconf</span><br><span class="line">git clone --recursive https://github.com/mpromonet/v4l2tools</span><br><span class="line">make </span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+
+
+</div></article></div></main><footer><div class="paginator"><a href="/2024/03/21/ffmpeg/" class="prev">PREV</a><a href="/2024/02/19/busybox_kernel/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2024 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
