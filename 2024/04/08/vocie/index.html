@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Linux中音频框架的学习与使用 · Big7ng's Blog</title><meta name="description" content="Linux中音频框架的学习与使用 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Linux中音频框架的学习与使用</h1><div class="post-info">Apr 8, 2024</div><div class="post-content"><p>本文将介绍如何在Linux中查看声卡信息，ALSA、pulseaudio框架以及与音频相关的工具。</p>
+<h1 id="硬件信息"><a href="#硬件信息" class="headerlink" title="硬件信息"></a>硬件信息</h1><p>查看声卡硬件信息</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cat /proc/asound/cards	#列出主机上的声卡</span><br><span class="line">lspci | grep -i audio	#查看pci总线上的声音芯片集的名称和类型</span><br><span class="line">lsusb | grep -i audio	#查看usb总线上的声音芯片集的名称和类型</span><br><span class="line">lsusb -t				#可以以树形的方式更方便地查看usb设备</span><br><span class="line">ls /sys/class/sound/	#查看当前系统中的所有音频设备</span><br></pre></td></tr></table></figure>
+<p>查看驱动信息</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lsmod | grep snd</span><br></pre></td></tr></table></figure>
+
+<h1 id="PulseAudio"><a href="#PulseAudio" class="headerlink" title="PulseAudio"></a>PulseAudio</h1><p>PulseAudio 是一个音频服务器，它充当了你的应用程序和硬件设备之间的中间件。在一个系统中，它作为一个后台进程运行，接受来自一个或多个源的音频输入，然后将它们重定向到一个或多个接收点，例如声卡、蓝牙、远程网络上的 PulseAudio 服务器或其他进程。</p>
+<p>图形化管理工具<strong>PulseAudio Volume Control(pavucontrol)</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install pavucontrol</span><br></pre></td></tr></table></figure>
+
+<h1 id="ALSA"><a href="#ALSA" class="headerlink" title="ALSA"></a>ALSA</h1><p>ALSA（Advanced Linux Sound Architecture），它在Linux操作系统上提供了音频和MIDI（Musical Instrument Digital Interface，音乐设备数字化接口）的支持。在2.6系列内核中，ALSA已经成为默认的声音子系统，用来替换2.4系列内核中的OSS（Open Sound System，开放声音系统）。有点类似与Linux中V4L2的视频架构。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install alsa-base alsa-utils alsa-oss alsa-tools</span><br></pre></td></tr></table></figure>
+
+<p>配置音频</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">alsamixer	#ncurses配置界面</span><br><span class="line">amixer		#命令行配置界面</span><br></pre></td></tr></table></figure>
+
+<p>检查声卡设备</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">aplay -L	//检测播放设备</span><br><span class="line">aplay -l	//检测播放声卡</span><br><span class="line">arecord -L	//检测录音设备</span><br><span class="line">arecord -l	//检测录音声卡</span><br></pre></td></tr></table></figure>
+
+<p>录制音频，-D指定录音设备，-d指定录制时间，-r指定采样率，-c指定录音采样数。通过<code>aplay -L</code>命令，播放设备为”plughw:CARD&#x3D;M1066,DEV&#x3D;0”。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">arecord -D plughw:CARD=M1066,DEV=0 -d 5 -r 16000 -c 1 ./test.wav</span><br></pre></td></tr></table></figure>
+
+<p>播放音频文件，由于wav文件中包含录制数据，因此只需指定播放设备</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aplay -D plughw:CARD=M1066,DEV=0 ./test.wav</span><br></pre></td></tr></table></figure>
+
+<h3 id="ALSA与PulseAudio的关系"><a href="#ALSA与PulseAudio的关系" class="headerlink" title="ALSA与PulseAudio的关系"></a>ALSA与PulseAudio的关系</h3><p>ALSA(高级Linux声音体系)是为声卡提供驱动的Linux内核组件,以替代原先的OSS(开放声音系统).这两个是系统发出声音最低层的软件系统,可以视为(或者就是)驱动。</p>
+<p>而PulseAudio是声音服务器，简单说，软件要发声就先发消息给声音服务器，然后声音服务器经过处理(主要是混音),然后发给驱动控制声音设备发出声音。</p>
+<p>alsa是一套框架，应用层直接可以调用alsa lib发声音，但是混音上应该有些不足，操作可能比较复杂。pulseaudio，在alsa lib上又封装了一层，增加了很多pulseaudio自己定义的插件，这样大大扩展alsa lib的功能，同时混音方面也加强了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">没有pulseaudio：app--&gt;alsa lib ---&gt;alsa driver---&gt;发声音</span><br><span class="line">有pulseaudio：app---&gt;pulseaudio---&gt;alsa lib---&gt;alsa driver---&gt;发声音</span><br></pre></td></tr></table></figure>
+
+<img src="\img\pulseaudio1.png" alt="pulseaudio1" style="zoom:50%;" />
+
+<img src="\img\pulseaudio2.png" alt="pulseaudio2" style="zoom: 67%;" />
+
+<h1 id="sox"><a href="#sox" class="headerlink" title="sox"></a>sox</h1><p><a target="_blank" rel="noopener" href="http://sox.sourceforge.net/Main/HomePage">SoX</a>（即 Sound eXchange）可以将各种格式的音频文件转换为需要的其他格式，还可以对输入的音频文件应用各种效果，也支持在大多数平台上<strong>播放</strong>和<strong>录制</strong>音频文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install sox</span><br></pre></td></tr></table></figure>
+
+<p>获取音频文件的元数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">soxi test.wav</span><br><span class="line">sox --i test.wav</span><br></pre></td></tr></table></figure>
+
+<p>录制与播放, sox的使用类似于ffmpeg，都是从左至右指定输入、filter、输出。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rec test.wav	#录制音频文件</span><br><span class="line">sox -d test.wav	#同上</span><br><span class="line">play test.wav	#播放音频文件</span><br><span class="line">sox test.wav -d #同上</span><br></pre></td></tr></table></figure>
+
+<p>格式转换, sox可以根据参数文件的后缀推断出相应的格式, 并在复制音频数据的过程中自动进行转码。</p>
+<p>SoX 可以处理 <strong>self-describing</strong> 和 <strong>raw</strong> 格式的音频文件。 <strong>self-describing</strong> 格式（如 WAV、FLAC、MP3）的文件包含一个用于描述信号和编码属性的<strong>文件头</strong>，而 <strong>raw</strong> 或 <strong>headless</strong> 格式的音频则不包含这些信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sox test.wav test.mp3</span><br></pre></td></tr></table></figure>
+
+<p>查看sox提供的音频效果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sox --help-effect all	#查看所有效果</span><br><span class="line">sox --help-effect delay	#查看具体的效果</span><br></pre></td></tr></table></figure>
+
+<p>参考资料</p>
+<ul>
+<li>alsa</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/gmpy/articles/16778302.html">https://www.cnblogs.com/gmpy/articles/16778302.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/Advanced_Linux_Sound_Architecture">https://wiki.archlinux.org/title/Advanced_Linux_Sound_Architecture</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.alsa-project.org/wiki/Main_Page">https://www.alsa-project.org/wiki/Main_Page</a></p>
+<ul>
+<li>pulseaudio</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/PulseAudio">https://wiki.archlinux.org/title/PulseAudio</a></p>
+<p><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/249342/why-do-you-need-pulseaudio">https://unix.stackexchange.com/questions/249342/why-do-you-need-pulseaudio</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.freedesktop.org/wiki/Software/PulseAudio/">https://www.freedesktop.org/wiki/Software/PulseAudio/</a></p>
+<p><a target="_blank" rel="noopener" href="https://forum.ubuntu.org.cn/viewtopic.php?t=163776">https://forum.ubuntu.org.cn/viewtopic.php?t=163776</a></p>
+<p><a target="_blank" rel="noopener" href="https://tieba.baidu.com/p/3790145023">https://tieba.baidu.com/p/3790145023</a></p>
+</div></article></div></main><footer><div class="paginator"><a href="/2024/04/13/modules/" class="prev">PREV</a><a href="/2024/04/07/virtualenv/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2024 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
