@@ -6,9 +6,27 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lsmod | grep snd</span><br></pre></td></tr></table></figure>
 
 <h1 id="PulseAudio"><a href="#PulseAudio" class="headerlink" title="PulseAudio"></a>PulseAudio</h1><p>PulseAudio 是一个音频服务器，它充当了你的应用程序和硬件设备之间的中间件。在一个系统中，它作为一个后台进程运行，接受来自一个或多个源的音频输入，然后将它们重定向到一个或多个接收点，例如声卡、蓝牙、远程网络上的 PulseAudio 服务器或其他进程。</p>
-<p>图形化管理工具<strong>PulseAudio Volume Control(pavucontrol)</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install pavucontrol</span><br></pre></td></tr></table></figure>
+<p>pulseaudio控制命令如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pulseaudio --check</span><br><span class="line">pulseaudio -D</span><br></pre></td></tr></table></figure>
+<p>pulseaudio程序主要有两个配置文件：</p>
+<ol>
+<li><code>/etc/pluse/default.pa</code>: 默认启动脚本</li>
+<li><code>/etc/pluse/daemon.conf</code>: 配置文件</li>
+</ol>
+<p>pulseaudio自带的命令行管理工具pacmd，使用方法如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">pacmd <span class="built_in">stat</span>			<span class="comment">#查看pulseaudio状态</span></span><br><span class="line">pacmd list-sources	<span class="comment">#列出所有输入设备</span></span><br><span class="line">pacmd list-sink		<span class="comment">#列出所有输出设备</span></span><br><span class="line">pacmd set-default-sink	NAME|<span class="comment">#N		#设置默认输出设备</span></span><br><span class="line">pacmd set-default-source	NAME|<span class="comment">#N	#设置默认输入设备</span></span><br><span class="line">pacmd <span class="built_in">set</span>-(sink|<span class="built_in">source</span>)-volume NAME|<span class="comment">#N VOLUME	#设置设备的音量</span></span><br></pre></td></tr></table></figure>
 
+<p>如果使用的是桌面系统，可以使用图形化管理工具<strong>PulseAudio Volume Control(pavucontrol)</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install pavucontrol</span><br></pre></td></tr></table></figure>
+
+<h3 id="jack"><a href="#jack" class="headerlink" title="jack"></a>jack</h3><p>JACK Audio Connection Kit (or JACK)是一个低延迟的实时音频服务器,主要用于音频编辑和音乐制作等专业应用，例如Ardour 、Audacity。它提供了更精细的音频控制和路由。<br>PulseAudio 是一个通用的音频服务器,主要面向普通桌面用户。它提供了更简单的音频管理功能,如音量控制、设备切换等。</p>
+<p>jack和pulseaudio的区别如官网所述：</p>
+<blockquote>
+<ul>
+<li>PulseAudio is focused on desktop and mobile audio needs. It doesn’t try to address low latency usage, but does provide seamless device switching, network routing, global per-application volume control and lots more great stuff.</li>
+<li>JACK is focused on the needs of pro-audio and music creation users. It offers the lowest possible latency, complete routing flexibility between applications and audio hardware, and all audio is always sample synchronized - apps don’t run ahead or behind of others. It doesn’t provide the smooth desktop experience that PulseAudio is aiming at.</li>
+</ul>
+</blockquote>
 <h1 id="ALSA"><a href="#ALSA" class="headerlink" title="ALSA"></a>ALSA</h1><p>ALSA（Advanced Linux Sound Architecture），它在Linux操作系统上提供了音频和MIDI（Musical Instrument Digital Interface，音乐设备数字化接口）的支持。在2.6系列内核中，ALSA已经成为默认的声音子系统，用来替换2.4系列内核中的OSS（Open Sound System，开放声音系统）。有点类似与Linux中V4L2的视频架构。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install alsa-base alsa-utils alsa-oss alsa-tools</span><br></pre></td></tr></table></figure>
 
