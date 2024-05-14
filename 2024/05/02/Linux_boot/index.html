@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 嵌入式系统启动流程解析 · Big7ng's Blog</title><meta name="description" content="嵌入式系统启动流程解析 - Big7ng"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://big7ng.github.io/atom.xml" title="Big7ng's Blog"><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Big7ng's Blog" type="application/atom+xml">
+</head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="https://github.com/Big7ng" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">嵌入式系统启动流程解析</h1><div class="post-info">May 2, 2024</div><div class="post-content"><h1 id="嵌入式Linux通用启动流程"><a href="#嵌入式Linux通用启动流程" class="headerlink" title="嵌入式Linux通用启动流程"></a>嵌入式Linux通用启动流程</h1><p>在进一步探索uboot、Linux内核、设备树三者之间的关系前，本文先介绍一下嵌入式系统上电至Linux系统启动的整体流程是怎样的，几乎所有的嵌入式系统都遵循这套通用的启动流程，具体板子可能会有部分修改，但是逻辑是一样的。</p>
+<p>这里先给出几个术语：</p>
+<ul>
+<li>BROM：是Boot Rom的简称，是在cpu中固化的一段程序，一旦cpu制造完成，里面的内容便无法进行修改，cpu上电后就指向BROM中的代码，容量较少，一般用于初始化cpu以及引导下一阶段bootloader。</li>
+<li>SRAM：CPU中的SRAM，简单来说，就是CPU中的Cache。</li>
+<li>PL&#x2F;pre-loader：又叫Secondary program loader（SPL），用于初始化DDR内存、引导uboot。</li>
+<li>LK: <a target="_blank" rel="noopener" href="https://github.com/littlekernel/lk">Little Kernel</a>是一个开源的嵌入式操作系统内核，目标是提供一个简单而可靠的启动和初始化环境，以及基本的操作系统功能，如任务管理、内存管理和设备驱动程序。它通常用于嵌入式设备的引导过程，作为启动加载程序（bootloader）的一部分，与uboot功能类似。一旦系统启动完成，它可以被更复杂的操作系统（如Android）替代或与之配合使用。</li>
+<li>Bootloader：位于系统启动过程中的最前端，负责初始化硬件设备、加载操作系统内核并启动操作系统。上述的LK&#x2F;Uboot均属于bootloader。</li>
+</ul>
+<p>下面是一个嵌入式Linux系统的启动总体流程：</p>
+<ol>
+<li>执行Boot ROM中的Boot code，初始化cpu，引导SPL&#x2F;pre-loder（将SPL&#x2F;pre-loder从外部存储加载至SRAM中）；</li>
+<li>PC指针跳转至SPL处，执行SPL程序，初始化DDR内存，引导Bootloader（将Bootloader从外部存储加载至DDR中）；</li>
+<li>PC指针跳转至Bootloader处，初始化部分外围设备，加载基础驱动，引导Linux系统（将Linux Kernel、Ramdisk从外部存储加载至DDR中）；</li>
+<li>PC指针跳转至Linux kernel入口处，对硬件的控制权由bootloader转移至Linux kernel，Linux kernel运行后，挂载根文件系统，启动一系列系统服务（图形化界面、网络、音频等等）。</li>
+</ol>
+<img src="\img\boot_flow.png" alt="boot_flow" style="zoom:50%;" />
+
+<p>总体来说，在嵌入式系统的启动流程中，总是用一段较小的程序来引导一段更大的程序。有一个很好的比喻，将系统的启动流程比作古代桥梁的搭建，先用弓箭在两岸间搭建一根细绳，用这根细绳在两岸间连起粗绳，再用这根租绳连接更粗的绳子，直至在两岸间连接起一根铁链，这时一座桥的根基就搭建好了。</p>
+<h1 id="VisionFive2开发板启动流程"><a href="#VisionFive2开发板启动流程" class="headerlink" title="VisionFive2开发板启动流程"></a>VisionFive2开发板启动流程</h1><p>在介绍了嵌入式Linux系统的通用流程后，本章将介绍一个具体的例子：搭载RISC-V架构jh7110的<a target="_blank" rel="noopener" href="https://doc-en.rvspace.org/VisionFive2/Boot_UG/Shared/c_legal_notice.html">Visionfive2</a>开发板启动流程，如下图所示。</p>
+<img src="\img\jh7110_Boot_Flow.svg" alt="boot_flow"  />
+
+<h3 id="BootRom"><a href="#BootRom" class="headerlink" title="BootRom"></a>BootRom</h3><p>在板子上电后，执行BootROM程序，BootROM会根据AON_RGPIO[1,0] (0x1702002c)的值选择启动模式：1. 从Quad SPI NOR flash memory启动；2. 从UART启动。</p>
+<p>UART模式用于恢复模式，需要在上电的时候进行一系列操作（按住某个按钮或者给某给引脚置高电平）。一般情况下，不进行任何操作会默认从QSPI-NOR中启动， 将QSPI中的SPL加载至SRAM中并执行。</p>
+<h3 id="SPL"><a href="#SPL" class="headerlink" title="SPL"></a>SPL</h3><p>Visionfive将固件（SPL、OpenSBI、U-Boot）存储到了QSPI-NOR存储器中，内存布局如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">偏移</th>
+<th>长度</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">0x0</td>
+<td>0x80000</td>
+<td>SPL</td>
+</tr>
+<tr>
+<td align="left">0xF0000</td>
+<td>0x10000</td>
+<td>U-Boot环境变量</td>
+</tr>
+<tr>
+<td align="left">0x100000</td>
+<td>0x400000</td>
+<td>U-Boot+OpenSBI</td>
+</tr>
+<tr>
+<td align="left">0x600000</td>
+<td>0x1000000</td>
+<td>保留</td>
+</tr>
+</tbody></table>
+<p>SPL是基于uboot的启动程序，用于初始化DDR内存，并将OpenSBI和U-Boot加载至内存中，执行OpenSBI程序。</p>
+<h3 id="OpenSBI与UBoot"><a href="#OpenSBI与UBoot" class="headerlink" title="OpenSBI与UBoot"></a>OpenSBI与UBoot</h3><p>RISC-V架构的启动流程中多了一个OpenSBI环节，OpenSBI（Open Source Supervisor Binary Interface）实现了RISC-V SBI规范，它提供了一组机器模式下的SBI调用，用于操作处理器或与外部设备进行通信。其也作为固件的一部分，</p>
+<p>在Visionfive中，OpenSBI的作用有：1. 为Linux提供基础的系统调用；2. 将处理器的M模式转换为S模式；3. 跳转到0x4020_0000地址执行uboot程序。</p>
+<p>Uboot提供了简单的命令行功能、基础的文件系统与常见的外围设备驱动 （例如GMAC, UART, QSPI, SDIO, etc.)。Uboot主要用于通过各种方式引导Linux内核、设备树与根文件系统，包括ETH (Network), UART, QSPI, SDIO 与 NVMe (SSD)方式。</p>
+<p>下图为Visionfive2在启动过程中，内存地址的映射。</p>
+<img src="\img\Boot_Process.svg" alt="Boot_Process" />
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>OpenSBI是RISCV体系架构中特有的一个启动流程，虽然Visionfive2开发板的启动流程中多个一个OpenSBI，但整体流程还是遵循bootrom-&gt;spl-&gt;uboot-&gt;Linux kernel这个通用流程。</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2024/05/15/uboot_booti/" class="prev">PREV</a><a href="/2024/04/13/modules/" class="next">NEXT</a></div><div class="copyright"><p>© 2022 - 2024 <a href="https://big7ng.github.io">Big7ng</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
